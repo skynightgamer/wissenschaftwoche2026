@@ -1,24 +1,15 @@
 import java.util.Arrays;
 
 public class GradientDescent {
-    private Double[][] ratings = {
-        { null, -14.0, null, 1.0 },
-        { -6.0, null, null, -2.0 },
-        { null, -22.0, null, null },
-        { null, -8.0, 0.0, null }
-    };
-    private double[][] degrees = {
-        { 2, 3 },
-        { -5, -2 },
-        { -4, -3 },
-        { 1, 2 }
-    };
-    private double[][] preferences = {
-        { 3, -1 },
-        { -3, 0 },
-        { 4, 3 },
-        { 3, -4 }
-    };
+    private final Double[][] ratings;
+    private double[][] degrees;
+    private double[][] preferences;
+
+    public GradientDescent(Double[][] ratings, double[][] degrees, double[][] preferences) {
+        this.ratings = ratings;
+        this.degrees = degrees;
+        this.preferences = preferences;
+    }
 
     public double[][] getDegrees() {
         return degrees;
@@ -96,21 +87,23 @@ public class GradientDescent {
         return diff;
     }
 
-    public int gradientDescent() {
+    public void gradientDescent() {
         final var FEATURES = preferences[0].length;
         final var PERSONS = ratings.length;
         final var RHO = 0.5;
         final var SIGMA = 0.0001;
 
-        double target = 42;
+        System.out.println("Initial result: " + targetFn(degrees, preferences));
+
+        double length = 42;
         var its = 0;
-        while (target > 0.01) {
+        while (length > 0.01) {
             its++;
             var gradient = getGradient();
 
             var ALPHA = 1 / RHO;
 
-            var length = 0.0;
+            length = 0.0;
             for (var g : gradient) {
                 length += g * g;
             }
@@ -132,11 +125,10 @@ public class GradientDescent {
                 }
             } while (targetFn(nextDegrees, nextPreferences) > targetFn(degrees, preferences) - ALPHA * SIGMA * length);
 
-            target = targetFn(degrees, preferences);
-
             degrees = nextDegrees;
             preferences = nextPreferences;
         }
-        return its;
+        System.out.println("Final result: " + targetFn(degrees, preferences));
+        System.out.println("Iterations: " + its);
     }
 }
