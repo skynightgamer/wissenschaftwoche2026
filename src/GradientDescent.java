@@ -19,22 +19,26 @@ public class GradientDescent {
         return preferences;
     }
 
-    private double getRatingError(int p, int q) {
-        final var FEATURES = preferences[0].length;
-
-        var sum = 0.0;
-        for (var f = 0; f < FEATURES; f++) {
-            sum += preferences[p][f] * degrees[q][f];
-        }
-        return sum - ratings[p][q];
-    }
-
     private double[] getGradient() {
         final var FEATURES = preferences[0].length;
         final var PERSONS = ratings.length;
 
         var gradient = new double[2 * FEATURES * PERSONS];
         var i = 0;
+        
+        var ratingError = new double[PERSONS][PERSONS];
+        for (int p = 0; p < PERSONS; p++) {
+            for (int q = 0; q < PERSONS; q++) {
+                var rpq = ratings[p][q];
+                if (rpq != null) {
+                    ratingError[p][q] = 0.0;
+                    for (var f = 0; f < FEATURES; f++) {
+                        ratingError[p][q] += preferences[p][f] * degrees[q][f];
+                    }
+                    ratingError[p][q] -= ratings[p][q];
+                }
+            }
+        }
 
         // X
         for (int p = 0; p < PERSONS; p++) {
@@ -43,7 +47,7 @@ public class GradientDescent {
                 for (int q = 0; q < PERSONS; q++) {
                     var rqp = ratings[q][p];
                     if (rqp != null) {
-                        sum += 2 * getRatingError(q, p) * preferences[q][f];
+                        sum += 2 * ratingError[q][p] * preferences[q][f];
                     }
                 }
                 gradient[i++] = sum;
@@ -57,7 +61,7 @@ public class GradientDescent {
                 for (int q = 0; q < PERSONS; q++) {
                     var rpq = ratings[p][q];
                     if (rpq != null) {
-                        sum += 2 * getRatingError(p, q) * degrees[q][f];
+                        sum += 2 * ratingError[p][q] * degrees[q][f];
                     }
                 }
                 gradient[i++] = sum;
