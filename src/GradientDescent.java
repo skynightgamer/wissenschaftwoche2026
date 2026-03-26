@@ -29,7 +29,7 @@ public class GradientDescent {
 
         var gradient = new double[2 * FEATURES * PERSONS];
         var i = 0;
-        
+
         var ratingError = new double[PERSONS][PERSONS];
         for (int p = 0; p < PERSONS; p++) {
             for (int q = 0; q < PERSONS; q++) {
@@ -124,6 +124,7 @@ public class GradientDescent {
             var nextDegrees = new double[PERSONS][FEATURES];
             var nextPreferences = new double[PERSONS][FEATURES];
 
+            var currentTarget = targetFn(degrees, preferences);
             do {
                 ALPHA *= RHO;
                 for (int i = 0; i < FEATURES * PERSONS; i++) {
@@ -136,13 +137,12 @@ public class GradientDescent {
                     var f = i % FEATURES;
                     nextPreferences[p][f] = preferences[p][f] - gradient[i + FEATURES * PERSONS] * ALPHA;
                 }
-            } while (targetFn(nextDegrees, nextPreferences) > targetFn(degrees, preferences) - ALPHA * SIGMA * length);
+            } while (targetFn(nextDegrees, nextPreferences) > currentTarget - ALPHA * SIGMA * length);
 
             degrees = nextDegrees;
             preferences = nextPreferences;
-            System.out.print("\rIteration: " + its + " Length: " + length);
+            //System.out.print("\rIteration: " + its + " Length: " + length);
         } while (length > 0.01);
-        System.out.println();
         return new GradientDescentRater(initialVal, targetFn(degrees, preferences), its, (System.nanoTime() - t) / 1_000_000);
     }
 }
