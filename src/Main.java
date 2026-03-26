@@ -1,62 +1,55 @@
+import org.json.JSONObject;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class Main {
-    public static void main(String[] args) {
-        var FEATURES = 4;
-
-        var t = System.nanoTime();
+    public static void main(String[] args) throws IOException {
+        var features = 3;
 
         List<String> lines;
-        try {
-            lines = Files.readAllLines(Paths.get("data.txt"));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        var data = new JSONObject(Files.readString(Paths.get("batches.json")));
+        var ratingSum = data.getDouble("ratingSum");
+        var ratingNum = data.getInt("ratingNum");
+        var persons = data.getInt("persons");
+        var batches = data.getJSONArray("batches");
+
+        var trainRatings = new Double[persons][persons];
+        var trainSize = 0;
+        var testRatings = new Double[persons][persons];
+        var testSize = 0;
+        for (int i = 0; i < batches.length(); i++) {
+            var entries = batches.getJSONArray(i);
+            var size = entries.length();
+            if (i == 9) { testSize += size; }
+            else { trainSize += size; }
+
+            var ratingsSet = i == 9 ? testRatings : trainRatings;
+            for (int j = 0; j < size; j++) {
+                var entry = entries.getJSONObject(j);
+                ratingsSet[entry.getInt("p")][entry.getInt("q")] = entry.getDouble("r");
+            }
         }
-        var persons = Integer.parseInt(lines.get(0));
 
-        Double[][] ratings = new Double[persons][persons];
-        lines.remove(0);
-        var pattern = Pattern.compile("\\((\\d*),(\\d*)\\) (-?[0-9.]*)");
-        AtomicReference<Double> ratingSum = new AtomicReference<>(0.0);
-        AtomicInteger ratingNum = new AtomicInteger();
-        lines.stream()
-            .map(pattern::matcher)
-            .filter(Matcher::matches)
-            .forEach(m -> {
-                ratings[Integer.parseInt(m.group(1))][Integer.parseInt(m.group(2))] = Double.parseDouble(m.group(3));
-                ratingNum.getAndIncrement();
-                ratingSum.updateAndGet(v -> v + Double.parseDouble(m.group(3)));
-            });
-
-        System.out.println(ratingSum.get());
-        var initialVal = Math.sqrt(Math.abs(ratingSum.get() / ratingNum.get() / FEATURES));
-        var degrees = new double[persons][FEATURES];
-        var preferences = new double[persons][FEATURES];
+        var initialVal = Math.sqrt(Math.abs(ratingSum / ratingNum / features));
+        var degrees = new double[persons][features];
+        var preferences = new double[persons][features];
 
         for (int i = 0; i < persons; i++) {
-            for (int j = 0; j < FEATURES; j++) {
+            for (int j = 0; j < features; j++) {
                 degrees[i][j] = initialVal * (Math.random() / 5 + 0.9) * (Math.floor(Math.random() * 2) - 1);
                 preferences[i][j] = initialVal * (Math.random() / 5 + 0.9) * (Math.floor(Math.random() * 2) - 1);
             }
         }
 
-        var gd = new GradientDescent(ratings, degrees, preferences);
-
-        gd.gradientDescent();
-        System.out.println((System.nanoTime() - t) / 1_000_000 + "ms");
-        for (var d : gd.getDegrees()) {
-            System.out.println(Arrays.toString(d));
-        }
-        for (var p : gd.getPreferences()) {
-            System.out.println(Arrays.toString(p));
-        }
+        var gd = new GradientDescent(trainRatings, degrees, preferences);
+        var rater = gd.gradientDescent();
+        System.out.println(rater);
+        System.out.println("Final Train: " + rater.getFinalVal());
+        gd.setRatings(testRatings);
+        System.out.println("Final Test: " + gd.targetFn());
+        System.out.println("Test to Train: " + (gd.targetFn() / testSize) / (rater.getFinalVal() / trainSize));
     }
 }

@@ -1,7 +1,7 @@
 import java.util.Arrays;
 
 public class GradientDescent {
-    private final Double[][] ratings;
+    private Double[][] ratings;
     private double[][] degrees;
     private double[][] preferences;
 
@@ -17,6 +17,10 @@ public class GradientDescent {
 
     public double[][] getPreferences() {
         return preferences;
+    }
+
+    public void setRatings(Double[][] ratings) {
+        this.ratings = ratings;
     }
 
     private double[] getGradient() {
@@ -71,6 +75,10 @@ public class GradientDescent {
         return gradient;
     }
 
+    public double targetFn() {
+        return targetFn(this.degrees, this.preferences);
+    }
+
     private double targetFn(double[][] degrees, double[][] preferences) {
         final var FEATURES = preferences[0].length;
         final var PERSONS = ratings.length;
@@ -91,17 +99,17 @@ public class GradientDescent {
         return diff;
     }
 
-    public void gradientDescent() {
+    public GradientDescentRater gradientDescent() {
+        var t = System.nanoTime();
         final var FEATURES = preferences[0].length;
         final var PERSONS = ratings.length;
         final var RHO = 0.5;
         final var SIGMA = 0.0001;
 
-        System.out.println("Initial result: " + targetFn(degrees, preferences));
-
-        double length = 42;
+        var initialVal = targetFn(degrees, preferences);
+        double length;
         var its = 0;
-        while (length > 0.01) {
+        do {
             its++;
             var gradient = getGradient();
 
@@ -131,8 +139,7 @@ public class GradientDescent {
 
             degrees = nextDegrees;
             preferences = nextPreferences;
-        }
-        System.out.println("Final result: " + targetFn(degrees, preferences));
-        System.out.println("Iterations: " + its);
+        } while (length > 0.01);
+        return new GradientDescentRater(initialVal, targetFn(degrees, preferences), its, (System.nanoTime() - t) / 1_000_000);
     }
 }
