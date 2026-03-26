@@ -9,7 +9,6 @@ public class Main {
     public static void main(String[] args) throws IOException {
         var features = 3;
 
-        List<String> lines;
         var data = new JSONObject(Files.readString(Paths.get("batches.json")));
         var ratingSum = data.getDouble("ratingSum");
         var ratingNum = data.getInt("ratingNum");

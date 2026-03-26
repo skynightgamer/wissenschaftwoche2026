@@ -109,6 +109,7 @@ public class GradientDescent {
         var initialVal = targetFn(degrees, preferences);
         double length;
         var its = 0;
+        System.out.print("");
         do {
             its++;
             var gradient = getGradient();
@@ -139,7 +140,9 @@ public class GradientDescent {
 
             degrees = nextDegrees;
             preferences = nextPreferences;
+            System.out.print("\rIteration: " + its + " Length: " + length);
         } while (length > 0.01);
+        System.out.println();
         return new GradientDescentRater(initialVal, targetFn(degrees, preferences), its, (System.nanoTime() - t) / 1_000_000);
     }
 }
